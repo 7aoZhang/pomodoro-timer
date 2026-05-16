@@ -11,10 +11,37 @@
     --work: #e74c3c;
     --short-break: #2ecc71;
     --long-break: #3498db;
+
+    /* dark theme (default) */
     --bg: #1a1a2e;
     --card: #16213e;
     --text: #eee;
     --sub: #aab;
+    --tab-bg: rgba(255,255,255,0.05);
+    --tab-hover-bg: rgba(255,255,255,0.08);
+    --tab-hover-text: #ddd;
+    --btn-small-bg: rgba(255,255,255,0.08);
+    --btn-small-hover-bg: rgba(255,255,255,0.15);
+    --btn-small-hover-text: #ddd;
+    --dot-inactive: rgba(255,255,255,0.15);
+    --ring-track: rgba(255,255,255,0.08);
+    --shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+
+  [data-theme="light"] {
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --sub: #667;
+    --tab-bg: rgba(0,0,0,0.05);
+    --tab-hover-bg: rgba(0,0,0,0.06);
+    --tab-hover-text: #333;
+    --btn-small-bg: rgba(0,0,0,0.06);
+    --btn-small-hover-bg: rgba(0,0,0,0.1);
+    --btn-small-hover-text: #333;
+    --dot-inactive: rgba(0,0,0,0.12);
+    --ring-track: rgba(0,0,0,0.08);
+    --shadow: 0 20px 60px rgba(0,0,0,0.1);
   }
 
   body {
@@ -27,17 +54,28 @@
   }
 
   .container {
+    position: relative;
     background: var(--card);
     border-radius: 24px;
     padding: 48px 40px;
     text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    box-shadow: var(--shadow);
     min-width: 380px;
   }
 
+  .theme-toggle {
+    position: absolute; top: 16px; right: 16px;
+    width: 36px; height: 36px; border-radius: 50%;
+    border: none; cursor: pointer; font-size: 18px;
+    background: transparent;
+    transition: all 0.2s;
+    line-height: 36px; padding: 0;
+  }
+  .theme-toggle:hover { background: var(--btn-small-bg); }
+
   .mode-tabs {
     display: flex; gap: 6px;
-    background: rgba(255,255,255,0.05);
+    background: var(--tab-bg);
     border-radius: 12px; padding: 4px;
     margin-bottom: 36px;
   }
@@ -52,7 +90,7 @@
   .mode-tab.active[data-mode="work"]     { background: var(--work); color: #fff; }
   .mode-tab.active[data-mode="short"]    { background: var(--short-break); color: #fff; }
   .mode-tab.active[data-mode="long"]     { background: var(--long-break); color: #fff; }
-  .mode-tab:hover:not(.active) { background: rgba(255,255,255,0.08); color: #ddd; }
+  .mode-tab:hover:not(.active) { background: var(--tab-hover-bg); color: var(--tab-hover-text); }
 
   .timer-ring {
     position: relative;
@@ -63,7 +101,7 @@
   .timer-ring svg { transform: rotate(-90deg); }
 
   .ring-bg {
-    fill: none; stroke: rgba(255,255,255,0.08);
+    fill: none; stroke: var(--ring-track);
     stroke-width: 8;
   }
 
@@ -118,10 +156,10 @@
   .btn-start:active { transform: scale(0.97); }
 
   .btn-small {
-    background: rgba(255,255,255,0.08); color: var(--sub);
+    background: var(--btn-small-bg); color: var(--sub);
   }
 
-  .btn-small:hover { background: rgba(255,255,255,0.15); color: #ddd; }
+  .btn-small:hover { background: var(--btn-small-hover-bg); color: var(--btn-small-hover-text); }
 
   .stats {
     display: flex; justify-content: center; gap: 24px;
@@ -137,10 +175,8 @@
 
   .phase-dot {
     width: 8px; height: 8px; border-radius: 50%;
-    background: rgba(255,255,255,0.15);
+    background: var(--dot-inactive);
     transition: all 0.3s;
-    --dot-color: rgba(255,255,255,0.15);
-    --dot-glow: none;
   }
 
   .phase-dot.done             { background: var(--work); }
@@ -154,6 +190,8 @@
 <body>
 
 <div class="container">
+
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="切换主题">🌙</button>
 
   <div class="mode-tabs">
     <button class="mode-tab active" data-mode="work" onclick="setMode('work')">🍅 专注</button>
@@ -221,6 +259,7 @@ el.modeTabs = document.querySelectorAll('.mode-tab');
 el.todayCount = $('todayCount');
 el.totalCount = $('totalCount');
 el.focusMinutes = $('focusMinutes');
+el.themeToggle = $('themeToggle');
 
 let currentMode = MODE.WORK;
 let timeLeft = DURATION.work;
@@ -233,6 +272,20 @@ let totalCount = parseInt(localStorage.getItem('pomo_total') || '0');
 let focusMinutes = parseInt(localStorage.getItem('pomo_focus') || '0');
 
 const todayKey = new Date().toDateString();
+
+function loadTheme() {
+  const theme = localStorage.getItem('pomo_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  el.themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  el.themeToggle.textContent = next === 'light' ? '☀️' : '🌙';
+  localStorage.setItem('pomo_theme', next);
+}
 
 function checkDayReset() {
   const storedDay = localStorage.getItem('pomo_day');
@@ -435,6 +488,8 @@ document.addEventListener('keydown', e => {
     setMode(MODE.LONG);
   } else if (e.code === 'KeyS') {
     skipPhase();
+  } else if (e.code === 'KeyT') {
+    toggleTheme();
   }
 });
 
@@ -442,6 +497,7 @@ if (Notification.permission === 'default') {
   Notification.requestPermission();
 }
 
+loadTheme();
 checkDayReset();
 updateStats();
 updateFullDisplay();
